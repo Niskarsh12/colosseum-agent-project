@@ -1,59 +1,84 @@
-import tkinter as tk
-import random
-from tkinter import messagebox
+import sys
+import json
+import os
+import urllib.request
+from datetime import datetime
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
-class SolanaCatcherGame:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Colosseum: Solana Block Catcher")
-        self.root.geometry("400x500")
-        self.root.resizable(False, False)
+RPC_URL = "https://api.devnet.solana.com"
+DATA_DIR = "data"
+DATA_FILE = os.path.join(DATA_DIR, "snapshots.json")
 
-        self.canvas = tk.Canvas(root, bg="#121212", height=500, width=400)
-        self.canvas.pack()
+class SolanaClient:
+    def _rpc_call(self, method, params=None):
+        data = json.dumps({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": method,
+            "params": params or []
+        }).encode("utf-8")
+        req = urllib.request.Request(RPC_URL, data=data, headers={'Content-Type': 'application/json'})
+        with urllib.request.urlopen(req) as res:
+            return json.loads(res.read().decode())["result"]
 
-        self.score = 0
-        self.score_text = self.canvas.create_text(50, 20, text=f"Score: {self.score}", fill="white", font=("Arial", 12))
+    def get_pulse(self):
+        return {
+            "timestamp": datetime.now().isoformat(),
+            "health": self._rpc_call("getHealth"),
+            "slot": self._rpc_call("getSlot"),
+            "blockhash": self._rpc_call("getLatestBlockhash")["value"]["blockhash"]
+        }
+
+def save_snapshot(snapshot):
+    if not os.path.exists(DATA_DIR):
+        os.makedirs(DATA_DIR)
+    
+    history = []
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "r") as f:
+            try:
+                history = json.load(f)
+            except json.JSONDecodeError:
+                pass
+    
+    history.append(snapshot)
+    with open(DATA_FILE, "w") as f:
+        json.dump(history[-50:], f, indent=2)
+
+class DashboardHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
         
-        self.basket = self.canvas.create_rectangle(175, 450, 225, 470, fill="#9945FF") # Solana Purple
-        self.blocks = []
+        history = []
+        if os.path.exists(DATA_FILE):
+            with open(DATA_FILE, "r") as f:
+                history = json.load(f)
         
-        self.root.bind("<Left>", lambda e: self.move_basket(-20))
-        self.root.bind("<Right>", lambda e: self.move_basket(20))
+        rows = "".join([f"<tr><td>{s['timestamp']}</td><td>{s['health']}</td><td>{s['slot']}</td><td>{s['blockhash']}</td></tr>" for s in reversed(history)])
         
-        self.spawn_block()
-        self.update_game()
+        html = f"""
+        <html><head><title>Solana Pulse</title><style>body{{font-family:sans-serif;padding:20px;}} table{{width:100%;border-collapse:collapse;}} th,td{{border:1px solid #ccc;padding:8px;text-align:left;}} th{{background:#f4f4f4;}}</style></head>
+        <body><h1>Solana Pulse Dashboard</h1><table><tr><th>Time</th><th>Health</th><th>Slot</th><th>Blockhash</th></tr>{rows}</table></body></html>
+        """
+        self.wfile.write(html.encode())
 
-    def move_basket(self, dx):
-        coords = self.canvas.coords(self.basket)
-        if coords[0] + dx >= 0 and coords[2] + dx <= 400:
-            self.canvas.move(self.basket, dx, 0)
+def main():
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "once"
+    client = SolanaClient()
 
-    def spawn_block(self):
-        x = random.randint(20, 380)
-        block = self.canvas.create_oval(x, 0, x+20, 20, fill="#14F195") # Solana Green
-        self.blocks.append(block)
-        self.root.after(1500, self.spawn_block)
-
-    def update_game(self):
-        for block in self.blocks[:]:
-            self.canvas.move(block, 0, 5)
-            bc = self.canvas.coords(block)
-            bk = self.canvas.coords(self.basket)
-
-            # Collision detection
-            if bc[3] >= bk[1] and bk[0] <= bc[0] <= bk[2]:
-                self.score += 1
-                self.canvas.itemconfig(self.score_text, text=f"Score: {self.score}")
-                self.canvas.delete(block)
-                self.blocks.remove(block)
-            elif bc[3] > 500:
-                self.canvas.delete(block)
-                self.blocks.remove(block)
-
-        self.root.after(30, self.update_game)
+    if cmd == "once":
+        print("Fetching Solana pulse...")
+        pulse = client.get_pulse()
+        save_snapshot(pulse)
+        print(json.dumps(pulse, indent=2))
+    elif cmd == "serve":
+        port = 8000
+        print(f"Serving dashboard at http://localhost:{port}")
+        HTTPServer(("", port), DashboardHandler).serve_forever()
+    else:
+        print("Unknown command. Use 'once' or 'serve'.")
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    game = SolanaCatcherGame(root)
-    root.mainloop()
+    main()

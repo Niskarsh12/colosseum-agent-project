@@ -1,24 +1,28 @@
-# Colosseum Agent Hackathon Tool
+# Solana Pulse
 
-Version: 1.5.2
+A lightweight tool to monitor Solana network health and persist snapshots locally. Built for the Colosseum Agent Hackathon.
 
-A small Tkinter-based mini-game and API client skeleton for the Colosseum Agent Hackathon.
+## Features
+- **Poll**: Fetch health, slot, and blockhash from Solana Devnet.
+- **Persist**: Save snapshots to `data/snapshots.json`.
+- **Serve**: View a simple HTML dashboard on `http://localhost:8000`.
 
-## Requirements
-- Windows OS
-- Python 3.8+
+## Usage
 
-## How to Run
+### Single Snapshot
 ```bash
-python main.py
+python main.py once
 ```
 
-## How to Test
+### Start Dashboard
+```bash
+python main.py serve
+```
+
+### Run Tests
 ```bash
 python -m unittest discover -s tests
 ```
 
-## Features
-- **Mini-Game**: A simple 'Solana Block Catcher' game.
-- **API Client**: A standard library `urllib` implementation for the Colosseum API.
-- **Unit Tests**: Basic logic verification.
+## Safety Note
+This project uses public RPC endpoints. Never hardcode private keys or sensitive API keys in the source code. Use environment variables for any future secret integrations.
