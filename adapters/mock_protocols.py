@@ -1,6 +1,6 @@
-class ProtocolAdapter:
-    def get_yield_data(self):
-        raise NotImplementedError
+from __future__ import annotations
+
+from .protocols import ProtocolAdapter
 
 class KaminoAdapter(ProtocolAdapter):
     def get_yield_data(self):

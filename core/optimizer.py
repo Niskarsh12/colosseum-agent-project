@@ -1,12 +1,26 @@
 class YieldOptimizer:
-    def __init__(self, adapters):
+    def __init__(self, adapters, fallback_adapters=None):
         self.adapters = adapters
+        self.fallback_adapters = fallback_adapters or []
         self.market_data = []
 
     def sync_market_data(self):
         self.market_data = []
+        errors = []
         for adapter in self.adapters:
-            self.market_data.append(adapter.get_yield_data())
+            try:
+                self.market_data.append(adapter.get_yield_data())
+            except Exception as exc:  # noqa: BLE001
+                errors.append(str(exc))
+
+        # If all adapters failed, fall back to deterministic mock values.
+        if not self.market_data and self.fallback_adapters:
+            for adapter in self.fallback_adapters:
+                try:
+                    self.market_data.append(adapter.get_yield_data())
+                except Exception:
+                    pass
+        return {"ok": bool(self.market_data), "count": len(self.market_data), "errors": errors}
 
     def plan_strategy(self, investment_amount: float):
         """Deterministic planning: Allocates to the highest APY first."""
