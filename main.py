@@ -1,32 +1,29 @@
-import time
 import sys
-from client import ColosseumClient
-from config import AGENT_NAME, HEARTBEAT_URL
+from core.optimizer import YieldOptimizer
+from adapters.mock_protocols import KaminoAdapter, MeteoraAdapter
 
 def main():
-    print(f"--- Starting {AGENT_NAME} ---")
-    client = ColosseumClient()
+    print("--- Solana Yield Optimizer Prototype ---")
     
-    # 1. Simulate Registration (Mocked for safety in demo)
-    print(f"[*] Registering agent: {AGENT_NAME}...")
-    # In production: response = client.register(AGENT_NAME)
-    print("[!] Registration skipped: No API key provided in environment.")
+    # Initialize adapters
+    adapters = [
+        KaminoAdapter(),
+        MeteoraAdapter()
+    ]
+    
+    optimizer = YieldOptimizer(adapters)
+    
+    print("Fetching current yields...")
+    optimizer.sync_market_data()
+    
+    print("\nGenerating deterministic strategy...")
+    strategy = optimizer.plan_strategy(investment_amount=1000.0)
+    
+    print(f"\nRecommended Allocation (Total: ${strategy['total_value']}):")
+    for allocation in strategy['allocations']:
+        print(f"- {allocation['protocol']}: ${allocation['amount']:.2f} @ {allocation['apy']}% APY")
+    
+    print(f"\nProjected Annual Return: ${strategy['projected_return']:.2f}")
 
-    # 2. Heartbeat Loop
-    print("[*] Starting Heartbeat and Yield Monitoring loop...")
-    try:
-        for i in range(3):
-            print(f"\nCycle {i+1}:")
-            hb = client.get_heartbeat(HEARTBEAT_URL)
-            print(f"[+] Heartbeat fetched ({len(hb)} bytes)")
-            
-            # Simulated Solana Logic
-            print("[+] Scanning Kamino/Jupiter for yield opportunities...")
-            print("[+] Found 6.5% APY on SOL-USDC. Monitoring liquidity...")
-            
-            time.sleep(1)
-    except KeyboardInterrupt:
-        print("\nStopping agent...")
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

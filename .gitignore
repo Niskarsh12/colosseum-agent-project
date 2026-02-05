@@ -1,4 +1,3 @@
 __pycache__/
-*.py[cod]
+*.pyc
 .env
-agent_secrets.json
