@@ -1,28 +1,26 @@
 import unittest
 from core.optimizer import YieldOptimizer
+from adapters.privacy_provider import SipherAdapter
 
-class MockAdapter:
-    def __init__(self, name, apy):
-        self.name = name
-        self.apy = apy
-    def get_yield_data(self):
-        return {"name": self.name, "apy": self.apy}
+class TestYieldOptimizer(unittest.TestCase):
+    def setUp(self):
+        self.opps = [
+            {"protocol": "A", "apy": 0.05},
+            {"protocol": "B", "apy": 0.10}
+        ]
 
-class TestOptimizer(unittest.TestCase):
-    def test_deterministic_allocation(self):
-        adapters = [MockAdapter("Low", 5.0), MockAdapter("High", 10.0)]
-        optimizer = YieldOptimizer(adapters)
-        strategy = optimizer.plan_strategy(1000.0)
-        
-        # High APY should get 70% ($700)
-        high_alloc = next(a for a in strategy['allocations'] if a['protocol'] == "High")
-        self.assertEqual(high_alloc['amount'], 700.0)
-        self.assertEqual(len(strategy['allocations']), 2)
+    def test_deterministic_selection(self):
+        optimizer = YieldOptimizer()
+        plan = optimizer.generate_plan(self.opps)
+        self.assertEqual(plan['protocol'], "B")
+        self.assertEqual(plan['apy'], 0.10)
 
-    def test_empty_adapters(self):
-        optimizer = YieldOptimizer([])
-        strategy = optimizer.plan_strategy(1000.0)
-        self.assertEqual(len(strategy['allocations']), 0)
+    def test_privacy_integration(self):
+        adapter = SipherAdapter("http://mock")
+        optimizer = YieldOptimizer(privacy_provider=adapter)
+        plan = optimizer.generate_plan(self.opps)
+        self.assertIn('stealth_address', plan)
+        self.assertTrue(plan['stealth_address'].startswith('v1_stealth_'))
 
 if __name__ == '__main__':
     unittest.main()

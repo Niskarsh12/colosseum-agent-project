@@ -1,20 +1,21 @@
 # Solana Yield Optimizer
 
-A clean, deterministic prototype for optimizing yield across Solana protocols. This version focuses on a structured adapter pattern and safe strategy planning.
+An agentic prototype for optimizing yield on Solana with a focus on privacy-preserving transaction routing.
 
-This build fetches **read-only** yield signals from public APIs (no transactions, no keys).
-If a live API call fails, it falls back to mock values so the demo still runs.
-
-## Requirements
-- Windows OS
-- Python 3.10+
+## Features
+- **Privacy Adapters**: Integrated structure for Sipher-style stealth addresses to prevent front-running.
+- **Deterministic Planning**: Logic for calculating optimal yield paths across protocols.
+- **Zero Dependencies**: Built entirely with the Python Standard Library.
 
 ## Running the Project
+
+To run the optimizer simulation:
 ```cmd
 python main.py
 ```
 
 ## Running Tests
+
 ```cmd
 python -m unittest discover -s tests
 ```

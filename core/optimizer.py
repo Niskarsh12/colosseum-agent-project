@@ -1,47 +1,19 @@
 class YieldOptimizer:
-    def __init__(self, adapters, fallback_adapters=None):
-        self.adapters = adapters
-        self.fallback_adapters = fallback_adapters or []
-        self.market_data = []
+    def __init__(self, privacy_provider=None):
+        self.privacy_provider = privacy_provider
 
-    def sync_market_data(self):
-        self.market_data = []
-        errors = []
-        for adapter in self.adapters:
-            try:
-                self.market_data.append(adapter.get_yield_data())
-            except Exception as exc:  # noqa: BLE001
-                errors.append(str(exc))
-
-        # If all adapters failed, fall back to deterministic mock values.
-        if not self.market_data and self.fallback_adapters:
-            for adapter in self.fallback_adapters:
-                try:
-                    self.market_data.append(adapter.get_yield_data())
-                except Exception:
-                    pass
-        return {"ok": bool(self.market_data), "count": len(self.market_data), "errors": errors}
-
-    def plan_strategy(self, investment_amount: float):
-        """Deterministic planning: Allocates to the highest APY first."""
-        if not self.market_data:
-            self.sync_market_data()
-
-        # Sort by APY descending
-        sorted_pools = sorted(self.market_data, key=lambda x: x['apy'], reverse=True)
+    def generate_plan(self, opportunities):
+        # Deterministic selection of highest APY
+        best = max(opportunities, key=lambda x: x['apy'])
         
-        # Simple deterministic split: 70% to best, 30% to second best for risk mitigation
-        allocations = []
-        if len(sorted_pools) >= 2:
-            allocations.append({"protocol": sorted_pools[0]['name'], "amount": investment_amount * 0.7, "apy": sorted_pools[0]['apy']})
-            allocations.append({"protocol": sorted_pools[1]['name'], "amount": investment_amount * 0.3, "apy": sorted_pools[1]['apy']})
-        elif sorted_pools:
-            allocations.append({"protocol": sorted_pools[0]['name'], "amount": investment_amount, "apy": sorted_pools[0]['apy']})
-
-        projected_return = sum((a['amount'] * (a['apy'] / 100)) for a in allocations)
-        
-        return {
-            "total_value": investment_amount,
-            "allocations": allocations,
-            "projected_return": projected_return
+        plan = {
+            "protocol": best['protocol'],
+            "apy": best['apy'],
+            "action": "DEPOSIT"
         }
+
+        if self.privacy_provider:
+            # Apply privacy increment: generate stealth address for the transaction
+            plan['stealth_address'] = self.privacy_provider.generate_stealth_destination()
+            
+        return plan
