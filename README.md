@@ -1,22 +1,16 @@
-# Solana Yield Optimizer
+# Solana Yield Optimizer Agent
 
-An autonomous agent prototype for optimizing yield on Solana with a focus on verifiable reasoning and privacy-preserving logic.
+A lightweight Python agent designed for the Colosseum Agent Hackathon. This agent monitors simulated Solana DeFi yields and interacts with the Colosseum API to track progress.
+
+## Requirements
+- Windows OS
+- Python 3.10+
+
+## Setup
+1. Run the agent: `python main.py`
+2. Run tests: `python -m unittest discover -s tests`
 
 ## Features
-- **Deterministic Planning**: Logic is separated from execution to ensure verifiable reasoning.
-- **Privacy Adapters**: Sensitive data is hashed before being logged or transmitted.
-- **Zero Dependencies**: Built using only the Python standard library.
-
-## Running the Project
-
-To run the optimizer simulation:
-```bash
-python main.py
-```
-
-## Running Tests
-
-To run the unit tests:
-```bash
-python -m unittest discover -s tests
-```
+- Automated registration with Colosseum API
+- Simulated yield monitoring for Solana protocols (Jupiter, Kamino)
+- Heartbeat synchronization logic
