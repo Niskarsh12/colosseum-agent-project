@@ -1,21 +1,22 @@
 # Solana Yield Optimizer
 
-An agentic prototype for optimizing yield on Solana with a focus on privacy-preserving transaction routing.
+An autonomous agent prototype for optimizing yield on Solana with a focus on verifiable reasoning and privacy-preserving logic.
 
 ## Features
-- **Privacy Adapters**: Integrated structure for Sipher-style stealth addresses to prevent front-running.
-- **Deterministic Planning**: Logic for calculating optimal yield paths across protocols.
-- **Zero Dependencies**: Built entirely with the Python Standard Library.
+- **Deterministic Planning**: Logic is separated from execution to ensure verifiable reasoning.
+- **Privacy Adapters**: Sensitive data is hashed before being logged or transmitted.
+- **Zero Dependencies**: Built using only the Python standard library.
 
 ## Running the Project
 
 To run the optimizer simulation:
-```cmd
+```bash
 python main.py
 ```
 
 ## Running Tests
 
-```cmd
+To run the unit tests:
+```bash
 python -m unittest discover -s tests
 ```

@@ -1,26 +1,31 @@
 import unittest
-from core.optimizer import YieldOptimizer
-from adapters.privacy_provider import SipherAdapter
+from optimizer.logic import YieldOptimizer
 
 class TestYieldOptimizer(unittest.TestCase):
     def setUp(self):
-        self.opps = [
-            {"protocol": "A", "apy": 0.05},
-            {"protocol": "B", "apy": 0.10}
-        ]
+        self.optimizer = YieldOptimizer("test-agent")
 
-    def test_deterministic_selection(self):
-        optimizer = YieldOptimizer()
-        plan = optimizer.generate_plan(self.opps)
-        self.assertEqual(plan['protocol'], "B")
-        self.assertEqual(plan['apy'], 0.10)
+    def test_deterministic_allocation(self):
+        vault = {"address": "test-vault", "apy": 0.20, "tvl": 2000000}
+        plan = self.optimizer.generate_plan(vault)
+        self.assertEqual(plan["decision"], "ALLOCATE")
+        self.assertIn("commitment", plan)
 
-    def test_privacy_integration(self):
-        adapter = SipherAdapter("http://mock")
-        optimizer = YieldOptimizer(privacy_provider=adapter)
-        plan = optimizer.generate_plan(self.opps)
-        self.assertIn('stealth_address', plan)
-        self.assertTrue(plan['stealth_address'].startswith('v1_stealth_'))
+    def test_privacy_hashing(self):
+        vault_addr = "secret-vault-address"
+        vault = {"address": vault_addr, "apy": 0.05, "tvl": 100}
+        plan = self.optimizer.generate_plan(vault)
+        # Ensure the actual address is not in the plan
+        plan_str = str(plan)
+        self.assertNotIn(vault_addr, plan_str)
+        self.assertEqual(len(plan["vault_hash"]), 16)
+
+    def test_verifiable_commitment(self):
+        vault = {"address": "v1", "apy": 0.10, "tvl": 1000}
+        plan1 = self.optimizer.generate_plan(vault)
+        plan2 = self.optimizer.generate_plan(vault)
+        # Determinism check
+        self.assertEqual(plan1["commitment"], plan2["commitment"])
 
 if __name__ == '__main__':
     unittest.main()

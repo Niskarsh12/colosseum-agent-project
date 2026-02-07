@@ -1,27 +1,20 @@
-import sys
-from core.optimizer import YieldOptimizer
-from adapters.privacy_provider import SipherAdapter
+import json
+from optimizer.logic import YieldOptimizer
 
 def main():
-    print("--- Solana Yield Optimizer v1.5.2 ---")
-    
-    # Initialize privacy layer based on forum feedback
-    privacy_layer = SipherAdapter(api_base="https://api.sipher.xyz")
-    optimizer = YieldOptimizer(privacy_provider=privacy_layer)
-    
-    print("[1] Scanning Solana protocols for yield...")
-    opportunities = [
-        {"protocol": "Kamino", "apy": 0.12, "vault": "USDC-SOL"},
-        {"protocol": "Meteora", "apy": 0.15, "vault": "USDC-SOL"}
-    ]
-    
-    print("[2] Calculating optimal path...")
-    plan = optimizer.generate_plan(opportunities)
-    
-    print(f"[3] Execution Plan: {plan['action']} on {plan['protocol']} at {plan['apy']*100}%")
-    
-    if plan.get('stealth_address'):
-        print(f"[4] Privacy Shield Active: Routing via {plan['stealth_address']}")
+    print("--- Solana Yield Optimizer Agent ---")
+    optimizer = YieldOptimizer(agent_id="agent-001")
 
-if __name__ == '__main__':
+    # Simulated vault data
+    vaults = [
+        {"address": "SOL-USDC-LP-123", "apy": 0.18, "tvl": 2500000},
+        {"address": "STAKE-SOL-456", "apy": 0.01, "tvl": 5000000}
+    ]
+
+    for vault in vaults:
+        plan = optimizer.generate_plan(vault)
+        print(f"\n[Plan Generated]")
+        print(json.dumps(plan, indent=2))
+
+if __name__ == "__main__":
     main()
